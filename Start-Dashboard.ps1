@@ -48,6 +48,24 @@ $AlertEndpoint = New-UDEndpoint -Schedule $HourlySchedule -Endpoint {
     $Cache:AlertCount = $OpenAlerts.Count
 }
 
+$TicketEndpoint = New-UDEndpoint -Schedule $HourlySchedule -Endpoint {
+    $Cache:TicketCounts = @{
+        "Open" = 0;
+        "OpenedLast30Days" = 0;
+        "ClosedLast30Days" = 0;
+    }
+    $Cache:OpenTickets = @()
+
+    $Tickets = Get-Atera -Endpoint "/tickets" -ApiKey $AteraAPIKey
+    $30DaysAgo = (Get-Date).AddDays(-30)
+    $Tickets | ForEach-Object {
+        # Is the ticket open
+        if ($_.TicketStatus -in @("Open", "Pending")) {
+            $Cache:OpenTickets += $_
+        }
+    }
+}
+
 $Dashboard = New-UDDashboard -Title "Cage Data Dashboard" -Content {
     New-UDLayout -Columns 4 -Content {
         New-UdMonitor -Title "Monitored Agents" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
@@ -75,4 +93,4 @@ $Dashboard = New-UDDashboard -Title "Cage Data Dashboard" -Content {
     }
 }
 
-Start-UDDashboard -Dashboard $Dashboard -Port 10001 -AutoReload -Endpoint @($AgentEndpoint, $AlertEndpoint)
+Start-UDDashboard -Dashboard $Dashboard -Port 10001 -AutoReload -Endpoint @($AgentEndpoint, $AlertEndpoint, $TicketEndpoint)

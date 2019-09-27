@@ -12,7 +12,7 @@ function New-AteraRequest($Uri, $Method, $Headers, $ResultSet=@()) {
     $Result = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers
     $ResultSet = $ResultSet + $Result.items
     if($Result.page -lt $Result.totalPages) {
-        Write-Host "Going around again (Page $($Result.page) of $($Result.totalPages))"
+        Write-Host "Getting page $($Result.page) of $($Result.totalPages) from $($Endpoint)"
         New-AteraRequest -Uri $Result.nextLink -Method $Method -Headers $Headers -ResultSet $ResultSet
     } else { return $ResultSet }
 }
