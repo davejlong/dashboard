@@ -62,15 +62,18 @@ $TicketEndpoint = New-UDEndpoint -Schedule $HourlySchedule -Endpoint {
         # Is the ticket open
         if ($_.TicketStatus -in @("Open", "Pending")) {
             $Cache:OpenTickets += $_
+            $Cache:TicketCounts.Open += 1;
         }
+        if ($_.TicketCreatedDate -ge $30DaysAgo) { $Cache:TicketCounts.OpenedLast30Days += 1 }
+        if ($_.TicketResolvedDate -ne $null -and $_.TicketResolvedDate -ge $30DaysAgo) { $Cache:TicketCounts.ClosedLast30Days += 1 }
     }
 }
-
-$Dashboard = New-UDDashboard -Title "Cage Data Dashboard" -Content {
+$Theme = Get-UDTheme -Name "DarkDefault"
+$Dashboard = New-UDDashboard -Theme $Theme -Content {
     New-UDLayout -Columns 4 -Content {
         New-UdMonitor -Title "Monitored Agents" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
             $Cache:AgentCount | Out-UDMonitorData
-        } -AutoRefresh -RefreshInterval 5
+        } -AutoRefresh -RefreshInterval 600
         New-UDCounter -Title "Servers" -Icon "Server" -Endpoint {
             $Cache:AgentServerCount
         } -AutoRefresh -RefreshInterval 1
@@ -82,14 +85,24 @@ $Dashboard = New-UDDashboard -Title "Cage Data Dashboard" -Content {
         } -AutoRefresh -RefreshInterval 1
         
         New-UdMonitor -Title "Open Alerts" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
-            $Cache:AlertCount | Out-UDMonitorData
-        } -AutoRefresh -RefreshInterval 5
+            $Cache:TicketCounts.Open | Out-UDMonitorData
+        } -AutoRefresh -RefreshInterval 30
         New-UDCounter -Title "Critical Alerts" -Endpoint {
             $Cache:CriticalAlertCount
         } -AutoRefresh -RefreshInterval 1
         New-UDCounter -Title "Warning Alerts" -Endpoint {
             $Cache:WarningAlertCount
         } -AutoRefresh -RefreshInterval 1
+        New-UdMonitor -Title "Open Tickets" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
+            $Cache:OpenTickets.Count | Out-UDMonitorData
+        } -AutoRefresh -RefreshInterval 30
+        New-UdChart -Title "Opened vs Closed Tickets Last 30 Days" -Type Bar -AutoRefresh -Endpoint {
+            @{"Opened"=$Cache:TicketCounts.OpenedLast30Days; "Closed"=$Cache:TicketCounts.ClosedLast30Days } `
+                | Out-UDChartData -DatasetLabel "Opened vs Closed" -Dataset @(
+                    New-UdChartDataset -DataProperty "Opened" -Label "Opened" -BackgroundColor "#80962F23" -HoverBackgroundColor "#80962F23"
+                    New-UdChartDataset -DataProperty "Closed" -Label "Closed" -BackgroundColor "#8014558C" -HoverBackgroundColor "#8014558C"
+                )
+        }
     }
 }
 
