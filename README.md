@@ -1,5 +1,7 @@
 # Cage Data Dashboard
 
+![Screenshot](screenshot.png)
+
 ## Installation
 
 Download the entire repository and run the install script:
