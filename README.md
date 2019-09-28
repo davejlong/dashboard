@@ -1,5 +1,7 @@
 # Cage Data Dashboard
 
+![Screenshot](screenshot.png)
+
 ## Installation
 
 Download the entire repository and run the install script:
@@ -14,6 +16,6 @@ Download the entire repository and run the install script:
 > .\dashboard.ps1 -AteraAPIKey "[YOUR API KEY FROM ATERA]"
 ```
 
-PS: Atera API key can be found in: https://app.atera.com/Admin#/admin/api
+PS: Atera API key can be found in: [https://app.atera.com/Admin#/admin/api]()
 
-Then open your browser and go to http://127.0.0.1:8001
+Then open your browser and go to [http://127.0.0.1:8001]()
