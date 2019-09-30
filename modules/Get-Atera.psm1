@@ -12,7 +12,7 @@ function Get-Atera {
 
     function New-AteraRequest($Uri, $Method, $Headers, $MaxPages, $ResultSet=@()) {
         $Result = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers
-        $ResultSet = $ResultSet + $Result.items
+        $ResultSet += $Result.items
         if($Result.page -lt $Result.totalPages -and $Result.Page -lt $MaxPages) {
             Write-Host "Getting page $($Result.page) of $($Result.totalPages) from $($Endpoint)"
             New-AteraRequest -Uri $Result.nextLink -Method $Method -Headers $Headers -ResultSet $ResultSet
@@ -26,3 +26,5 @@ function Get-Atera {
 
     return (New-AteraRequest -Uri $Uri -Method $Method -Headers $Headers -MaxPages $MaxPages)
 }
+
+Export-ModuleMember -Function "Get-Atera"
