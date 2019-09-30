@@ -1,13 +1,15 @@
 $Schedule = New-UDEndpointSchedule -Every 1 -Hour
 
 New-UDEndpoint -Schedule $Schedule -Endpoint {
-    $Agents = Get-Atera -Endpoint "/agents" -ApiKey $AteraAPIKey
+    Write-Warning "Atera API Key: $AteraApiKey"
+    $Agents = Get-Atera -Endpoint "/agents" -MaxPage 1 -ApiKey $AteraAPIKey
     $Cache:AteraAgents = @{
         ServerCount=0;
         DCCount=0;
         WorkstationCount=0;
         Count=0
     }
+    Write-Host "Got $($Agents.count) Agents"
     $Agents | ForEach-Object {
         switch ($_.OSType) {
             "Server" { $Cache:AteraAgents.ServerCount += 1; break; }
