@@ -15,6 +15,6 @@ if (!($PowershellGet -and $PowershellGet.Version -ge 2.2)) {
   Install-Module PowershellGet -Force
 }
 
-Import-Module PowerShellGet
+Import-Module PowerShellGet -MinimumVersion 2.2 -Force
 
 Install-Module UniversalDashboard.Community -AcceptLicense -Force
