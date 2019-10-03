@@ -17,6 +17,14 @@ Import-Module UniversalDashboard.Community
 $Modules = Join-Path "$PSScriptRoot" -ChildPath "modules" | Get-ChildItem | ForEach-Object {
   return $_.FullName
 }
+$ConfigFile = Join-PAth "$PSScriptRoot" -ChildPath "config.json"
+if (Test-Path $ConfigFile) {
+  (Get-Content $ConfigFile | ConvertFrom-Json).Variables.psobject.Properties `
+  | Where-Object MemberType -eq NoteProperty | ForEach-Object {
+    Set-Variable -Name $_.Name -Value $_.Value
+  }
+}
+
 $EndpointInit = New-UDEndpointInitialization -Module $Modules -Variable @("AteraApiKey", "AgileAccountEmail", "AgileApiKey", "AgileDomain")
 
 # Load in all of the Endpoints that generate the data for the dashboard
