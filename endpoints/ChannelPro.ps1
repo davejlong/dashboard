@@ -1,7 +1,8 @@
 $Schedule = New-UDEndpointSchedule -Every 30 -Minute
 New-UDEndpoint -Schedule $Schedule -Endpoint {
   $Feed = Invoke-RSSRequest -Uri "https://channelpronetwork.com/rss.xml"
-  Clear-UDElement -Id "channelpro-news"
+  Clear-UDElement -Id "channelpro-news" -Broadcast
+  Start-Sleep -Seconds 5 # Wait for the broadcast to process
   $Feed[0..3] | ForEach-Object {
     Add-UDElement -ParentId "channelpro-news" -Broadcast -Content {
       New-UDElement -Tag 'li' -Content {

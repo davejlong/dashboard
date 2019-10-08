@@ -1,5 +1,8 @@
 New-UDPage -Name "Tech" -DefaultHomePage -Icon "memory" -Content {
   New-UDLayout -Columns 4 -Content {
+    ###
+    # Alerts
+    ###
     New-UDMonitor -Title "Open Alerts" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
       $Cache:AteraAlerts.Open | Out-UDMonitorData
     } -AutoRefresh -RefreshInterval 30
@@ -9,10 +12,14 @@ New-UDPage -Name "Tech" -DefaultHomePage -Icon "memory" -Content {
     New-UDCounter -Title "Warning Alerts" -Icon "exclamation_circle" -BackgroundColor '#ffbf00' -TextAlignment center -TextSize Large -Endpoint {
       $Cache:AteraAlerts.WarningCount
     } -AutoRefresh -RefreshInterval 30
-    New-UDCard -Title "Latest from Channel Pro" -Id "channelpro-news-card" -Endpoint { 
-      New-UDElement -Tag 'ul' -Id "channelpro-news"
-    }
+
+    New-UdMonitor -Title "Monitored Agents" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
+      $Cache:AteraAgents.Count | Out-UDMonitorData
+    } -AutoRefresh -RefreshInterval 600
     
+    ###
+    # Tickets
+    ###
     New-UdMonitor -Title "Open Tickets" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
       $Cache:AteraTickets.Open | Out-UDMonitorData
     } -AutoRefresh -RefreshInterval 30
@@ -26,11 +33,10 @@ New-UDPage -Name "Tech" -DefaultHomePage -Icon "memory" -Content {
     New-UDCounter -Title "Contracts expiring in 30 days" -Icon "file_contract" -TextAlignment center -TextSize Large -Endpoint {
       $Cache:AteraContracts.Expiring30Days
     } -AutoRefresh -RefreshInterval 60
-    New-UDCard
     
-    New-UdMonitor -Title "Monitored Agents" -Type Line -DataPointHistory 20 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63'  -Endpoint {
-      $Cache:AteraAgents.Count | Out-UDMonitorData
-    } -AutoRefresh -RefreshInterval 600
+    ###
+    # Agents
+    ###
     New-UDCounter -Title "Servers" -Icon "Server" -TextAlignment center -TextSize Large -Endpoint {
       $Cache:AteraAgents.ServerCount
     } -AutoRefresh -RefreshInterval 30

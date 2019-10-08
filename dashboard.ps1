@@ -39,4 +39,4 @@ $Pages = Join-Path -Path $PSScriptRoot -ChildPath "pages" | Get-ChildItem | ForE
 
 $Theme = Get-UDTheme -Name "DarkDefault"
 $Dashboard = New-UDDashboard -Theme $Theme -EndpointInitialization $EndpointInit -Pages $Pages
-Start-UDDashboard -Dashboard $Dashboard -Port 8001 -AutoReload -Endpoint $Endpoints 
+Start-UDDashboard -Dashboard $Dashboard -Port 8001 -AutoReload -Endpoint $Endpoints
