@@ -36,16 +36,16 @@ function Get-Endpoints {
 function Get-Content {
   return {
     New-UDLayout -Columns 4 -Content {
-      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 60 -Icon "exclamation_triangle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor '#80FF6B63' -Endpoint {
-        $Cache:AteraAlerts.Critical.Count
+      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 10 -Icon "exclamation_triangle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor '#80FF6B63' -Endpoint {
+        ([System.Array]$Cache:AteraAlerts.Critical).Count
       }
-      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 60 -Icon "question_circle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#80FFB963"  -Endpoint {
-        $Cache:AteraAlerts.Warning.Count
+      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 10 -Icon "question_circle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#80FFB963"  -Endpoint {
+        ([System.Array]$Cache:AteraAlerts.Warning).Count
       }
-      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
+      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 10 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
         $Cache:AteraTickets.My.Count
       }
-      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
+      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 10 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
         $Cache:AteraTickets.Unassigned.Count
       }
 
@@ -55,7 +55,7 @@ function Get-Content {
             @{ ticks = @{ stepSize = 1 } }
           )}
       } -Endpoint {
-        $Cache:AteraAlerts.Critical.Count | Out-UDMonitorData
+        ([System.Array]$Cache:AteraAlerts.Critical).Count | Out-UDMonitorData
       }
       New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FFB963' -ChartBorderColor '#FFFFB963' -Options @{
         scales = @{
@@ -63,7 +63,7 @@ function Get-Content {
             @{ ticks = @{ stepSize = 1 } }
           )}
       } -Endpoint {
-        $Cache:AteraAlerts.Warning.Count | Out-UDMonitorData
+        ([System.Array]$Cache:AteraAlerts.Warning).Count | Out-UDMonitorData
       }
       New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options @{
         scales = @{
