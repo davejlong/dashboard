@@ -1,4 +1,4 @@
-Import-Module PSAtera
+Import-Module PSAtera -Force
 Set-AteraRecordLimit 500
 
 $TechnicianEmail = ''
@@ -36,16 +36,16 @@ function Get-Endpoints {
 function Get-Content {
   return {
     New-UDLayout -Columns 4 -Content {
-      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 60 -Icon "exclamation_triangle" -BackgroundColor '#80FF6B63' -FontColor '#FF280200' -Endpoint {
+      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 60 -Icon "exclamation_triangle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor '#80FF6B63' -Endpoint {
         $Cache:AteraAlerts.Critical.Count
       }
-      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 60 -Icon "question_circle" -BackgroundColor "#80FFB963" -FontColor "#FF281600" -Endpoint {
+      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 60 -Icon "question_circle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#80FFB963"  -Endpoint {
         $Cache:AteraAlerts.Warning.Count
       }
-      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -BackgroundColor "#8063A9FF" -FontColor "#FF001228" -Endpoint {
+      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
         $Cache:AteraTickets.My.Count
       }
-      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -BackgroundColor "#8063A9FF" -FontColor "#FF001228" -Endpoint {
+      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 60 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
         $Cache:AteraTickets.Unassigned.Count
       }
 
@@ -91,10 +91,10 @@ function Get-Content {
 
 function Get-Theme {
   return New-UDTheme -Name "CustomerDark" -Parent "Azure" -Definition @{
-    '.ud-counter .card-content .left-align' = @{
-      'font-size' = '3rem';
-      'text-align' = 'center';
-    };
+    # '.ud-counter .card-content .left-align' = @{
+    #   'font-size' = '3rem';
+    #   'text-align' = 'center';
+    # };
     '.ud-counter .card-content svg' = @{
       'display' = 'block';
       'margin' = '5px auto';
