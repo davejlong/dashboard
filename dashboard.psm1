@@ -49,36 +49,23 @@ function Get-Content {
         $Cache:AteraTickets.Unassigned.Count
       }
 
-      New-UDMonitor -Title "Critical Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63' -Options @{
+      $ChartOptions = @{
         scales = @{
           yAxes = @(
-            @{ ticks = @{ stepSize = 1 } }
+            @{ ticks = @{ stepSize = 1; beginAtZeto = $true; suggestedMin = 0; suggestedMax = 10 } }
           )}
-      } -Endpoint {
+      }
+
+      New-UDMonitor -Title "Critical Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63' -Options $ChartOptions -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Critical).Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FFB963' -ChartBorderColor '#FFFFB963' -Options @{
-        scales = @{
-          yAxes = @(
-            @{ ticks = @{ stepSize = 1 } }
-          )}
-      } -Endpoint {
+      New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FFB963' -ChartBorderColor '#FFFFB963' -Options $ChartOptions -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Warning).Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options @{
-        scales = @{
-          yAxes = @(
-            @{ ticks = @{ stepSize = 1 } }
-          )}
-      } -Endpoint {
+      New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.My.Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "Unassigned Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options @{
-        scales = @{
-          yAxes = @(
-            @{ ticks = @{ stepSize = 1 } }
-          )}
-      } -Endpoint {
+      New-UDMonitor -Title "Unassigned Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.Unassigned.Count | Out-UDMonitorData
       }
     }
