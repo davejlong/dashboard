@@ -1,9 +1,42 @@
 Import-Module PSAtera -Force
 Set-AteraRecordLimit 500
 
-$TechnicianEmail = ''
+$TechnicianEmail = ""
 function Set-TechnicianEmail([string]$Email) { $script:TechnicianEmail = $Email }
 
+$LastAlertRequest = Get-Date
+$LastTicketRequest = Get-Date
+
+$Colors = @{
+  Warning = "FFB963";
+  Critical = "FF6B63";
+  Ticket = "63A9FF";
+}
+$Icons = @{
+  Warning = "question_circle";
+  Critical = "exclamation_triangle";
+  Ticket = "ticket";
+}
+
+function Get-ToastedAlerts {
+  $Cache:AteraAlerts.All `
+    | Where-Object { (Get-Date $_.Created) -gt $LastAlertRequest } `
+    | ForEach-Object {
+      $Background = "#FF$($Colors[$_.Severity])"
+      $Message = "$($_.DeviceName) - $($_.AlertMessage)"
+      Show-UDToast -Title $_.CustomerName -Message $Message -BackgroundColor $Background -CloseOnClick -Broadcast -Icon $Icons[$_.Severity] -Duration 30000
+    }
+  $script:LastAlertRequest = Get-Date
+}
+
+function Get-ToastedTickets {
+  $Cache:AteraTickets.All `
+    | Where-Object { (Get-Date $_.TicketCreatedDate) -gt $LastTicketRequest } `
+    | ForEach-Object {
+      Show-UDToast -Title $_.CustomerName -Message $_.TicketTitle -BackgroundColor "#FF$($Colors.Ticket)" -CloseOnClick -Broadcast -Icon $Icons.Ticket -Duration 30000
+    }
+  $script:LastTicketRequest = Get-Date
+}
 
 function Get-Endpoints {
   $EveryFiveMinutes = New-UDEndpointSchedule -Every 5 -Minute
@@ -11,8 +44,10 @@ function Get-Endpoints {
     $alerts = Get-AteraAlertsFiltered -Open
     $Cache:AteraAlerts = @{
       Warning = $alerts | Where-Object { $_.Severity -eq "Warning" };
-      Critical = $alerts | Where-Object { $_.Severity -eq "Critical" }
+      Critical = $alerts | Where-Object { $_.Severity -eq "Critical" };
+      All = $alerts
     }
+    Get-ToastedAlerts
   }
   $TicketEndpoint = New-UDEndpoint -Schedule $EveryFiveMinutes -Endpoint {
     $tickets = Get-AteraTicketsFiltered -Open -Pending -ErrorAction SilentlyContinue
@@ -21,6 +56,7 @@ function Get-Endpoints {
       Unassigned = $tickets | Where-Object { !$_.TechnicianEmail };
       All = $tickets | Where-Object { $_.TechnicianEmail -eq $script:TechnicianEmail -or !$_.TechnicianEmail }
     }
+    Get-ToastedTickets
   }
 
   $GetAlerts = New-UDEndpoint -Url "/alerts" -Endpoint {
@@ -36,16 +72,16 @@ function Get-Endpoints {
 function Get-Content {
   return {
     New-UDLayout -Columns 4 -Content {
-      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 10 -Icon "exclamation_triangle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor '#80FF6B63' -Endpoint {
+      New-UDCounter -Title "Critical Alerts" -AutoRefresh -RefreshInterval 10 -Icon $Icons.Critical -TextAlignment "Center" -TextSize "Large" -BackgroundColor "#80$($Colors.Critical)" -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Critical).Count
       }
-      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 10 -Icon "question_circle" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#80FFB963"  -Endpoint {
+      New-UDCounter -Title "Warning Alerts" -AutoRefresh -RefreshInterval 10 -Icon $Icons.Warning -TextAlignment "Center" -TextSize "Large" -BackgroundColor "#80$($Colors.Warning)"  -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Warning).Count
       }
-      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 10 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
+      New-UDCounter -Title "My Tickets" -AutoRefresh -RefreshInterval 10 -Icon $Icons.Ticket -TextAlignment "Center" -TextSize "Large" -BackgroundColor "#80$($Colors.Ticket)" -Endpoint {
         $Cache:AteraTickets.My.Count
       }
-      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 10 -Icon "ticket" -TextAlignment 'Center' -TextSize 'Large' -BackgroundColor "#8063A9FF" -Endpoint {
+      New-UDCounter -Title "Unassigned Tickets" -AutoRefresh -RefreshInterval 10 -Icon $Icons.Ticket -TextAlignment "Center" -TextSize "Large" -BackgroundColor "#80$($Colors.Ticket)" -Endpoint {
         $Cache:AteraTickets.Unassigned.Count
       }
 
@@ -56,25 +92,27 @@ function Get-Content {
           )}
       }
 
-      New-UDMonitor -Title "Critical Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FF6B63' -ChartBorderColor '#FFFF6B63' -Options $ChartOptions -Endpoint {
+      New-UDMonitor -Title "Critical Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Critical).Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#80FFB963' -ChartBorderColor '#FFFFB963' -Options $ChartOptions -Endpoint {
+      New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Warning)" -ChartBorderColor "#FF$($Colors.Warning)" -Options $ChartOptions -Endpoint {
         ([System.Array]$Cache:AteraAlerts.Warning).Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options $ChartOptions -Endpoint {
+      New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.My.Count | Out-UDMonitorData
       }
-      New-UDMonitor -Title "Unassigned Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor '#8063A9FF' -ChartBorderColor '#FF63A9FF' -Options $ChartOptions -Endpoint {
+      New-UDMonitor -Title "Unassigned Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.Unassigned.Count | Out-UDMonitorData
       }
     }
 
-    New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id 'TicketGrid' -Endpoint {
+    New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id "TicketGrid" -Endpoint {
+      # TODO: Handle the case when $Cache:AteraTickets is null. Currently ForEach-Object errors in that case
+      if (!$Cache:AteraTickets) { return }
       $Cache:AteraTickets.All | ForEach-Object {
         if ($_.Link) { return }
-        $Link = New-UDLink -Text "Open" -Icon "ticket" -Url "https://app.atera.com/Admin#/ticket/$($_.TicketID)" -OpenInNewWindow
-        $_ | Add-Member -MemberType NoteProperty -Name 'Link' -Value $Link
+        $Link = New-UDLink -Text "Open" -Icon $Icons.Ticket -Url "https://app.atera.com/Admin#/ticket/$($_.TicketID)" -OpenInNewWindow
+        $_ | Add-Member -MemberType NoteProperty -Name "Link" -Value $Link
       }
       $Cache:AteraTickets.All | Sort-Object LastEndUserCommentTimeStamp -Descending | Select-Object LastEndUserCommentTimeStamp, TicketTitle, CustomerName, TicketType, TicketStatus, TechnicianFullName, Link | Out-UDGridData
     }
@@ -83,14 +121,10 @@ function Get-Content {
 
 function Get-Theme {
   return New-UDTheme -Name "CustomerDark" -Parent "Azure" -Definition @{
-    # '.ud-counter .card-content .left-align' = @{
-    #   'font-size' = '3rem';
-    #   'text-align' = 'center';
-    # };
-    '.ud-counter .card-content svg' = @{
-      'display' = 'block';
-      'margin' = '5px auto';
-      'font-size' = '1.5rem';
+    ".ud-counter .card-content svg" = @{
+      "display" = "block";
+      "margin" = "5px auto";
+      "font-size" = "1.5rem";
     }
   }
 }
