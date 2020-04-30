@@ -47,8 +47,18 @@ function Get-Endpoints {
       Critical = $alerts | Where-Object { $_.Severity -eq "Critical" };
       All = $alerts
     }
+
+    if (!$Cache:AteraAlertsOverTime) { $Cache:AteraAlertsOverTime = [System.Collections.ArrayList]@() }
+
+    $Cache:AteraAlertsOverTime.Add(@{
+      Time = Get-Date -Format t;
+      Critical = $Cache:AteraAlerts.Critical.Count;
+      Warning = $Cache:AteraAlerts.Warning.Count;
+    })
+
     Get-ToastedAlerts
   }
+
   $TicketEndpoint = New-UDEndpoint -Schedule $EveryFiveMinutes -Endpoint {
     $tickets = Get-AteraTicketsFiltered -Open -Pending -ErrorAction SilentlyContinue
     $Cache:AteraTickets = @{
@@ -59,14 +69,11 @@ function Get-Endpoints {
     Get-ToastedTickets
   }
 
-  $GetAlerts = New-UDEndpoint -Url "/alerts" -Endpoint {
-    $Cache:AteraAlerts | ConvertTo-Json
-  }
-  $GetTickets = New-UDEndpoint -Url "/tickets" -Endpoint {
-    $Cache:AteraTickets | ConvertTo-Json
-  }
+  $GetAlerts = New-UDEndpoint -Url "/alerts" -Endpoint { $Cache:AteraAlerts | ConvertTo-Json }
+  $GetTickets = New-UDEndpoint -Url "/tickets" -Endpoint { $Cache:AteraTickets | ConvertTo-Json }
+  $GetAlertsOverTime = New-UDEndpoint -Url "/alertsovertime" -Endpoint { $Cache:AteraAlertsOverTime | ConvertTo-Json }
 
-  return @($AlertEndpoint, $TicketEndpoint, $GetAlerts, $GetTickets)
+  return @($AlertEndpoint, $TicketEndpoint, $GetAlerts, $GetTickets, $GetAlertsOverTime)
 }
 
 function Get-Content {
@@ -92,12 +99,13 @@ function Get-Content {
           )}
       }
 
-      New-UDMonitor -Title "Critical Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
-        ([System.Array]$Cache:AteraAlerts.Critical).Count | Out-UDMonitorData
-      }
-      New-UDMonitor -Title "Warning Alerts" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Warning)" -ChartBorderColor "#FF$($Colors.Warning)" -Options $ChartOptions -Endpoint {
-        ([System.Array]$Cache:AteraAlerts.Warning).Count | Out-UDMonitorData
-      }
+      New-UDChart -Title "Alerts" -Type Line -RefreshInterval 30 -Endpoint {
+        $Cache:AteraAlertsOverTime | Out-UDChartData -LabelProperty Time -Dataset @(
+          New-UDChartDataset -DataProperty Warning -Label Warning -BackgroundColor "#80$($Colors.Warning)" -BorderColor "#FF$($Colors.Warning)" -AdditionalOptions @{ fill = $false }
+          New-UDChartDataset -DataProperty Critical -Label Critical -BackgroundColor "#80$($Colors.Critical)" -BorderColor "#FF$($Colors.Critical)" -AdditionalOptions @{ fill = $false }
+        )
+      } -Options $ChartOptions
+
       New-UDMonitor -Title "My Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.My.Count | Out-UDMonitorData
       }
@@ -107,7 +115,6 @@ function Get-Content {
     }
 
     New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id "TicketGrid" -Endpoint {
-      # TODO: Handle the case when $Cache:AteraTickets is null. Currently ForEach-Object errors in that case
       if (!$Cache:AteraTickets) { return }
       $Cache:AteraTickets.All | ForEach-Object {
         if ($_.Link) { return }
