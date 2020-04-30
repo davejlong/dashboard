@@ -71,7 +71,12 @@ function Get-Content {
     }
 
     New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id 'TicketGrid' -Endpoint {
-      $Cache:AteraTickets.All | Sort-Object LastEndUserCommentTimeStamp -Descending | Select-Object LastEndUserCommentTimeStamp, TicketTitle, CustomerName, TicketType, TicketStatus, TechnicianFullName | Out-UDGridData
+      $Cache:AteraTickets.All | ForEach-Object {
+        if ($_.Link) { return }
+        $Link = New-UDLink -Text "Open" -Icon "ticket" -Url "https://app.atera.com/Admin#/ticket/$($_.TicketID)" -OpenInNewWindow
+        $_ | Add-Member -MemberType NoteProperty -Name 'Link' -Value $Link
+      }
+      $Cache:AteraTickets.All | Sort-Object LastEndUserCommentTimeStamp -Descending | Select-Object LastEndUserCommentTimeStamp, TicketTitle, CustomerName, TicketType, TicketStatus, TechnicianFullName, Link | Out-UDGridData
     }
   }
 }
