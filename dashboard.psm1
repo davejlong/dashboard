@@ -1,4 +1,4 @@
-Import-Module PSAtera -Force
+Import-Module PSAtera -MinimumVersion 1.1.2 -Force
 Set-AteraRecordLimit 500
 
 $TechnicianEmail = ""
@@ -16,6 +16,7 @@ $Icons = @{
   Warning = "question_circle";
   Critical = "exclamation_triangle";
   Ticket = "ticket";
+  Article = "book";
 }
 
 function Get-ToastedAlerts {
@@ -112,6 +113,24 @@ function Get-Content {
       New-UDMonitor -Title "Unassigned Tickets" -Type Line -DataPointHistory 120 -RefreshInterval 60 -ChartBackgroundColor "#80$($Colors.Ticket)" -ChartBorderColor "#FF$($Colors.Ticket)" -Options $ChartOptions -Endpoint {
         $Cache:AteraTickets.Unassigned.Count | Out-UDMonitorData
       }
+
+      New-UDCard -Title "Knowledgebase" -Content {
+        New-UDInput -SubmitText "Search" -Endpoint {
+          param($Keyword)
+          
+          $Articles = Get-AteraKnowledgebase `
+            | Where-Object { $_.KBProduct -like "*$Keyword*" -or $_.KBContext -like "*$Keyword*" -or $_.KBKeywords -like "*$Keyword*"}
+          Show-UDModal -Content {
+            New-UDTable -Title "Search Results" -Headers @("Title", "Keywords", " ") -Endpoint {
+              $Articles | ForEach-Object {
+                $Link = New-UDLink -Text "Open" -Icon $Icons.Article -Url "https://app.atera.com/Admin$($_.KBAddress -replace "/#", "#")" -OpenInNewWindow
+                $_ | Add-Member -MemberType NoteProperty -Name "Link" -Value $Link
+              }
+              Out-UDTableData -Data $Articles -Property @("KBProduct", "KBKeywords", "Link")
+            }
+          }
+        }
+      } -Links @(New-UDLink -Text "Open" -Url "https://app.atera.com/Admin#/kb/center")
     }
 
     New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id "TicketGrid" -Endpoint {

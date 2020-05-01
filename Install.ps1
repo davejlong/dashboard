@@ -2,7 +2,7 @@ if (!(Get-Module -ListAvailable -Name UniversalDashboard.Community)) {
   Install-Module UniversalDashboard.Community -Scope CurrentUser -Force
 }
 if (!(Get-Module -ListAvailable -Name PSAtera)) {
-  Install-Module PSAtera -MinimumVersion "1.1.1" -Scope CurrentUser -Force
+  Install-Module PSAtera -MinimumVersion "1.1.2" -Scope CurrentUser -Force
 }
 
 $AteraKey = Read-Host "Enter your Atera API Key"
