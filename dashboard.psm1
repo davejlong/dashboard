@@ -126,7 +126,7 @@ function Get-Content {
                 $Link = New-UDLink -Text "Open" -Icon $Icons.Article -Url "https://app.atera.com/Admin$($_.KBAddress -replace "/#", "#")" -OpenInNewWindow
                 $_ | Add-Member -MemberType NoteProperty -Name "Link" -Value $Link
               }
-              Out-UDTableData -Data $Articles -Property @("KBProduct", "KBKeywords", "Link")
+              $Articles.GetEnumerator() | Out-UDTableData -Property @("KBProduct", "KBKeywords", "Link")
             }
           }
         }
