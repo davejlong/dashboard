@@ -114,23 +114,21 @@ function Get-Content {
         $Cache:AteraTickets.Unassigned.Count | Out-UDMonitorData
       }
 
-      New-UDCard -Title "Knowledgebase" -Content {
-        New-UDInput -SubmitText "Search" -Endpoint {
-          param($Keyword)
-          
-          $Articles = Get-AteraKnowledgebase `
-            | Where-Object { $_.KBProduct -like "*$Keyword*" -or $_.KBContext -like "*$Keyword*" -or $_.KBKeywords -like "*$Keyword*"}
-          Show-UDModal -Content {
-            New-UDTable -Title "Search Results" -Headers @("Title", "Keywords", " ") -Endpoint {
-              $Articles | ForEach-Object {
-                $Link = New-UDLink -Text "Open" -Icon $Icons.Article -Url "https://app.atera.com/Admin$($_.KBAddress -replace "/#", "#")" -OpenInNewWindow
-                $_ | Add-Member -MemberType NoteProperty -Name "Link" -Value $Link
-              }
-              $Articles.GetEnumerator() | Out-UDTableData -Property @("KBProduct", "KBKeywords", "Link")
+      New-UDInput -Title "Knowledgebase" -SubmitText "Search" -Endpoint {
+        param($Keyword)
+        
+        $Articles = Get-AteraKnowledgebase `
+          | Where-Object { $_.KBProduct -like "*$Keyword*" -or $_.KBContext -like "*$Keyword*" -or $_.KBKeywords -like "*$Keyword*"}
+        Show-UDModal -Content {
+          New-UDTable -Title "Search Results" -Headers @("Title", "Keywords", " ") -Endpoint {
+            $Articles | ForEach-Object {
+              $Link = New-UDLink -Text "Open" -Icon $Icons.Article -Url "https://app.atera.com/Admin$($_.KBAddress -replace "/#", "#")" -OpenInNewWindow
+              $_ | Add-Member -MemberType NoteProperty -Name "Link" -Value $Link
             }
+            @($Articles).GetEnumerator() | Out-UDTableData -Property @("KBProduct", "KBKeywords", "Link")
           }
         }
-      } -Links @(New-UDLink -Text "Open" -Url "https://app.atera.com/Admin#/kb/center")
+      }
     }
 
     New-UDGrid -Title "Open Tickets" -AutoRefresh -RefreshInterval 60 -Id "TicketGrid" -Endpoint {
